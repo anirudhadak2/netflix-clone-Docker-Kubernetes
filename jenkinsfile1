@@ -1,0 +1,46 @@
+pipeline {
+    agent  any
+        stages{
+        stage("Git Clone"){
+            steps{
+                git url: "https://github.com/anirudhadak2/netflix-clone-Docker-Kubernetes.git", branch: "main"
+            }
+        }
+
+
+stage('TRIVY FS SCAN') {
+            steps {
+                sh "trivy fs . > trivyfs.txt"
+            }
+        }
+
+
+ stage("Docker Build & Push"){
+            steps{
+                script{
+                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){  
+                    sh "docker build --build-arg TMDB_V3_API_KEY=adb1bdd5c4493c7c944db22009ff2d46  -t netflix-clone1 ."
+     
+                          sh "docker images"
+                      sh "docker tag netflix-clone1 anirudhadak2/new-app:netflix-clone1"
+                      sh "docker push anirudhadak2/new-app:netflix-clone1" 
+                    }
+                }
+            }
+        }
+
+
+ stage("TRIVY"){
+            steps{
+                sh "trivy image  anirudhadak2/new-app:netflix-clone1  > trivyimage.txt" 
+            }
+        }
+
+stage('Deploy to container'){
+            steps{
+                sh 'docker run -d --name netflix -p 8081:80 anirudhadak2/new-app:netflix-clone1'
+            }
+        }
+        
+        }
+    }
