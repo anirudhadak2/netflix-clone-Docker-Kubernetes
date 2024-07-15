@@ -1,0 +1,181 @@
+Started by user anirudha
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on Jenkins in /var/lib/jenkins/workspace/netflix-app clone@2
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Git Clone)
+[Pipeline] git
+The recommended git tool is: NONE
+No credentials specified
+Cloning the remote Git repository
+Cloning repository https://github.com/anirudhadak2/netflix-clone-Docker-Kubernetes.git
+ > git init /var/lib/jenkins/workspace/netflix-app clone@2 # timeout=10
+Fetching upstream changes from https://github.com/anirudhadak2/netflix-clone-Docker-Kubernetes.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.43.0'
+ > git fetch --tags --force --progress -- https://github.com/anirudhadak2/netflix-clone-Docker-Kubernetes.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git config remote.origin.url https://github.com/anirudhadak2/netflix-clone-Docker-Kubernetes.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+Avoid second fetch
+ > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
+Checking out Revision a16a8e7f1ed5c4d890ca8289bc66c5ea6d0d1098 (refs/remotes/origin/main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f a16a8e7f1ed5c4d890ca8289bc66c5ea6d0d1098 # timeout=10
+ > git branch -a -v --no-abbrev # timeout=10
+ > git checkout -b main a16a8e7f1ed5c4d890ca8289bc66c5ea6d0d1098 # timeout=10
+Commit message: "Update docker-compose.yaml"
+ > git rev-list --no-walk a16a8e7f1ed5c4d890ca8289bc66c5ea6d0d1098 # timeout=10
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (TRIVY FS SCAN)
+[Pipeline] sh
++ trivy fs .
+2024-07-15T11:14:52Z	INFO	Vulnerability scanning is enabled
+2024-07-15T11:14:52Z	INFO	Secret scanning is enabled
+2024-07-15T11:14:52Z	INFO	If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2024-07-15T11:14:52Z	INFO	Please see also https://aquasecurity.github.io/trivy/v0.53/docs/scanner/secret#recommendation for faster secret detection
+2024-07-15T11:14:52Z	INFO	[npm] To collect the license information of packages, "npm install" needs to be performed beforehand	dir="node_modules"
+2024-07-15T11:14:52Z	INFO	Suppressing dependencies for development and testing. To display them, try the '--include-dev-deps' flag.
+2024-07-15T11:14:52Z	INFO	Number of language-specific files	num=2
+2024-07-15T11:14:52Z	INFO	[npm] Detecting vulnerabilities...
+2024-07-15T11:14:52Z	INFO	[yarn] Detecting vulnerabilities...
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Docker Build & Push)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] withDockerRegistry
+$ /var/lib/jenkins/tools/org.jenkinsci.plugins.docker.commons.tools.DockerTool/docker/bin/docker login -u anirudhadak2 -p ******** https://index.docker.io/v1/
+Login Succeeded
+[Pipeline] {
+[Pipeline] sh
++ docker build --build-arg TMDB_V3_API_KEY=adb1bdd5c4493c7c944db22009ff2d46 -t netflix-clone1 .
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  7.797MB
+
+Step 1/16 : FROM node:16.17.0-alpine as builder
+ ---> 5dcd1f6157bd
+Step 2/16 : WORKDIR /app
+ ---> Using cache
+ ---> 3bb58cdb1387
+Step 3/16 : COPY ./package.json .
+ ---> Using cache
+ ---> fdd15e77dee7
+Step 4/16 : COPY ./yarn.lock .
+ ---> Using cache
+ ---> 3db0ba82e036
+Step 5/16 : RUN yarn install
+ ---> Using cache
+ ---> f5e26768f756
+Step 6/16 : COPY . .
+ ---> Using cache
+ ---> 11efe5722593
+Step 7/16 : ARG TMDB_V3_API_KEY
+ ---> Using cache
+ ---> f62da92ab37c
+Step 8/16 : ENV VITE_APP_TMDB_V3_API_KEY=${TMDB_V3_API_KEY}
+ ---> Using cache
+ ---> 0fb989294d69
+Step 9/16 : ENV VITE_APP_API_ENDPOINT_URL="https://api.themoviedb.org/3"
+ ---> Using cache
+ ---> 52664811385c
+Step 10/16 : RUN yarn build
+ ---> Using cache
+ ---> 281e59fe6c25
+Step 11/16 : FROM nginx:stable-alpine
+ ---> 19ddafb0ee3c
+Step 12/16 : WORKDIR /usr/share/nginx/html
+ ---> Using cache
+ ---> 8423954c2c8d
+Step 13/16 : RUN rm -rf ./*
+ ---> Using cache
+ ---> af720df95886
+Step 14/16 : COPY --from=builder /app/dist .
+ ---> Using cache
+ ---> d374a30758c9
+Step 15/16 : EXPOSE 80
+ ---> Using cache
+ ---> 335ab5f70aaa
+Step 16/16 : ENTRYPOINT ["nginx", "-g", "daemon off;"]
+ ---> Using cache
+ ---> d1a649b39160
+Successfully built d1a649b39160
+Successfully tagged netflix-clone1:latest
+[Pipeline] sh
++ docker images
+REPOSITORY             TAG              IMAGE ID       CREATED          SIZE
+<none>                 <none>           c510732fbdad   21 seconds ago   835MB
+netflix-clone1         latest           d1a649b39160   7 minutes ago    52MB
+anirudhadak2/new-app   netflix-clone1   d1a649b39160   7 minutes ago    52MB
+<none>                 <none>           281e59fe6c25   7 minutes ago    843MB
+netflix                latest           408f86b8f805   57 minutes ago   52MB
+nginx                  stable-alpine    19ddafb0ee3c   3 weeks ago      43.2MB
+node                   16.17.0-alpine   5dcd1f6157bd   23 months ago    115MB
+[Pipeline] sh
++ docker tag netflix-clone1 anirudhadak2/new-app:netflix-clone1
+[Pipeline] sh
++ docker push anirudhadak2/new-app:netflix-clone1
+The push refers to repository [docker.io/anirudhadak2/new-app]
+63ec26ea8a1d: Preparing
+1e7665310444: Preparing
+98e5cc2eec69: Preparing
+e0e747229517: Preparing
+3281b7b09ca0: Preparing
+eb0b050f7bb0: Preparing
+5ccc0877b840: Preparing
+7d8ec7787b4e: Preparing
+3412cc8c9e99: Preparing
+af9a70194aa4: Preparing
+eb0b050f7bb0: Waiting
+5ccc0877b840: Waiting
+7d8ec7787b4e: Waiting
+3412cc8c9e99: Waiting
+af9a70194aa4: Waiting
+e0e747229517: Layer already exists
+63ec26ea8a1d: Layer already exists
+98e5cc2eec69: Layer already exists
+3281b7b09ca0: Layer already exists
+1e7665310444: Layer already exists
+eb0b050f7bb0: Layer already exists
+5ccc0877b840: Layer already exists
+7d8ec7787b4e: Layer already exists
+3412cc8c9e99: Layer already exists
+af9a70194aa4: Layer already exists
+netflix-clone1: digest: sha256:f551cbd7f91e91a8b775222c9f8dafe00ed563437a4231b17ed7fc484aa28c68 size: 2407
+[Pipeline] }
+[Pipeline] // withDockerRegistry
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (TRIVY)
+[Pipeline] sh
++ trivy image anirudhadak2/new-app:netflix-clone1
+2024-07-15T11:14:56Z	INFO	Vulnerability scanning is enabled
+2024-07-15T11:14:56Z	INFO	Secret scanning is enabled
+2024-07-15T11:14:56Z	INFO	If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2024-07-15T11:14:56Z	INFO	Please see also https://aquasecurity.github.io/trivy/v0.53/docs/scanner/secret#recommendation for faster secret detection
+2024-07-15T11:14:56Z	INFO	Detected OS	family="alpine" version="3.19.2"
+2024-07-15T11:14:56Z	INFO	[alpine] Detecting vulnerabilities...	os_version="3.19" repository="3.19" pkg_num=66
+2024-07-15T11:14:56Z	INFO	Number of language-specific files	num=0
+2024-07-15T11:14:56Z	WARN	Using severities from other vendors for some vulnerabilities. Read https://aquasecurity.github.io/trivy/v0.53/docs/scanner/vulnerability#severity-selection for details.
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Deploy to container)
+[Pipeline] sh
++ docker run -d --name netflix -p 8081:80 anirudhadak2/new-app:netflix-clone1
+4fc0302916076f24bd8a20a278b4e1e8e3f02f3275cdec30661c21a79d63932e
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] End of Pipeline
+Finished: SUCCESS
